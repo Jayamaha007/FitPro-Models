@@ -4,10 +4,11 @@ from fastapi import FastAPI
 import joblib
 from pydantic import BaseModel
 
-app = FastAPI()
+workout = FastAPI()
 
 # Load the trained model
 loaded_model = joblib.load('Models/workoutmodel.joblib')
+
 
 class UserInput(BaseModel):
     age: int
@@ -15,7 +16,8 @@ class UserInput(BaseModel):
     exercise_hours_per_week: int
     calories_consumed_per_day: int
 
-@app.post("/recommend/")
+
+@workout.post("/predict/workout")
 async def recommend(user_input: UserInput):
     try:
         input_data = [

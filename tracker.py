@@ -2,51 +2,45 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
-# Load the trained model and other preprocessing objects
-loaded_model = joblib.load('trackerResult.joblib')
-scaler = StandardScaler()
-label_encoder = LabelEncoder()
+# Load the model and encoder
+loaded_model = joblib.load('Models/TrackerResults.joblib')
+encoder = joblib.load('Models/TrackEncoder.joblib')
 
-# Define your FAST API app
-app = FastAPI()
+# Store the unique categories and feature names for 'Sex' and 'Activity_Level'
+sex_categories = encoder.categories_[0].tolist()
+activity_categories = encoder.categories_[1].tolist()
+feature_names = encoder.get_feature_names_out(['Sex', 'Activity_Level'])
 
-# Define the input schema using Pydantic
+tracker = FastAPI()
+
+
 class UserInput(BaseModel):
-    height: float
-    weight: float
-    age: float
-    sex: str
-    maintenance_calories: float
+    Height: int
+    Weight: int
+    Age: int
+    Sex: str
+    Activity_Level: str
+    Maintenance_Calories: int
 
-# Define an endpoint for making predictions
-@app.post("/predict/")
-async def predict(user_input: UserInput):
-    try:
-        # Encode the sex input
-        sex_encoded = label_encoder.transform([user_input.sex.upper()])[0]
 
-        # Scale the user input
-        user_input_scaled = scaler.transform([[
-            user_input.height,
-            user_input.weight,
-            user_input.age,
-            sex_encoded,
-            user_input.maintenance_calories
-        ]])
+@tracker.post("/predict/tracker")
+def predict_result(user_input: UserInput):
+    # Check if user input categories are in the stored categories
+    if user_input.Sex not in sex_categories or user_input.Activity_Level not in activity_categories:
+        raise HTTPException(status_code=400, detail="Invalid category provided")
 
-        # Make predictions using the loaded model
-        prediction = loaded_model.predict(user_input_scaled)[0]
+    # Create a DataFrame with the user input
+    user_input_df = pd.DataFrame([user_input.dict()])
 
-        # Define response messages
-        if prediction == "You're Gaining Weight":
-            response_msg = "You're Gaining Weight"
-        elif prediction == "You're Losing Weight":
-            response_msg = "You're Losing Weight"
-        else:
-            response_msg = "You're Maintaining your Weight"
+    # Encode user input using the stored feature names
+    user_input_encoded = encoder.transform(user_input_df[['Sex', 'Activity_Level']])
+    user_input_features = pd.concat([user_input_df[['Height', 'Weight', 'Age', 'Maintenance_Calories']],
+                                     pd.DataFrame(user_input_encoded.toarray(), columns=feature_names)],
+                                    axis=1)
 
-        return {"prediction": response_msg}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # Predict the result
+    predicted_result = loaded_model.predict(user_input_features)
+
+    return {"Predicted_Result": predicted_result[0]}
