@@ -2,7 +2,8 @@
 
 from fastapi import FastAPI
 #from tracker import app  # Import the FastAPI app from workout.py
-from workout import  app
+#from workout import  app
+from meal import app
 
 if __name__ == "__main__":
     import uvicorn

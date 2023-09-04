@@ -4,15 +4,15 @@ import joblib
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
-# Load the model and necessary pre-processing components
-loaded_model = joblib.load('Models/trackerResult.joblib')
+# Load the trained model and other preprocessing objects
+loaded_model = joblib.load('trackerResult.joblib')
 scaler = StandardScaler()
 label_encoder = LabelEncoder()
 
-# Create an instance of the FastAPI app
+# Define your FAST API app
 app = FastAPI()
 
-# Create a Pydantic model for the user input
+# Define the input schema using Pydantic
 class UserInput(BaseModel):
     height: float
     weight: float
@@ -20,33 +20,33 @@ class UserInput(BaseModel):
     sex: str
     maintenance_calories: float
 
-# Define an API endpoint to make predictions
-@app.post("/track/")
-async def predict_weight_status(user_input: UserInput):
+# Define an endpoint for making predictions
+@app.post("/predict/")
+async def predict(user_input: UserInput):
     try:
-        # Encode the user's sex
+        # Encode the sex input
         sex_encoded = label_encoder.transform([user_input.sex.upper()])[0]
 
-        # Scale the user's input
+        # Scale the user input
         user_input_scaled = scaler.transform([[
             user_input.height,
             user_input.weight,
             user_input.age,
             sex_encoded,
-            user_input.maintenance_calories,
+            user_input.maintenance_calories
         ]])
 
-        # Make a prediction
+        # Make predictions using the loaded model
         prediction = loaded_model.predict(user_input_scaled)[0]
 
-        # Map the prediction back to a meaningful label
-        weight_status = {
-            0: "You're Losing Weight",
-            1: "You're Maintaining Your Weight",
-            2: "You're Gaining Weight",
-        }
+        # Define response messages
+        if prediction == "You're Gaining Weight":
+            response_msg = "You're Gaining Weight"
+        elif prediction == "You're Losing Weight":
+            response_msg = "You're Losing Weight"
+        else:
+            response_msg = "You're Maintaining your Weight"
 
-        return {"Predicted Weight Status": weight_status[prediction]}
-
+        return {"prediction": response_msg}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
