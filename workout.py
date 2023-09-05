@@ -1,5 +1,5 @@
 # workout.py
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 import joblib
 from pydantic import BaseModel

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
+from fastapi.middleware.cors import CORSMiddleware
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
 
