@@ -7,12 +7,13 @@ from uvicorn import run
 from meal import meal
 from workout import workout
 from tracker import tracker
+from detect import dimensions
 
 app = FastAPI()
 
 # CORS Configuration
 origins = [
-    "http://localhost:3000",  # Replace with the origin of your React app
+    "http://localhost:8000",  # Replace with the origin of your React app
     # Add other allowed origins as needed
 ]
 
@@ -28,6 +29,7 @@ app.add_middleware(
 app.mount("/meal", meal)
 app.mount("/workout", workout)
 app.mount("/tracker", tracker)
+app.mount("/body", dimensions)
 
 if __name__ == "__main__":
     # Run the FastAPI app on port 8000
