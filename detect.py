@@ -7,7 +7,7 @@ from fastapi import UploadFile, File
 from pydantic import BaseModel
 import shutil
 
-model = YOLO('Models/dimensions.pt')
+model = YOLO('Models/dimensions_old.pt')
 
 dimensions = FastAPI()
 
